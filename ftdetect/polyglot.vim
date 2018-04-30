@@ -106,9 +106,23 @@ function! s:isAnsible()
   return 0
 endfunction
 
-:au BufNewFile,BufRead * if s:isAnsible() | set ft=ansible | en
-:au BufNewFile,BufRead *.j2 set ft=ansible_template
-:au BufNewFile,BufRead hosts set ft=ansible_hosts
+function! s:setupTemplate()
+  if exists("g:ansible_template_syntaxes")
+    let filepath = expand("%:p")
+    for syntax_name in items(g:ansible_template_syntaxes)
+      let s:syntax_string = '\v/'.syntax_name[0]
+      if filepath =~ s:syntax_string
+        execute 'set ft='.syntax_name[1].'.jinja2'
+        return
+      endif
+    endfor
+  endif
+  set ft=jinja2
+endfunction
+
+au BufNewFile,BufRead * if s:isAnsible() | set ft=yaml.ansible | en
+au BufNewFile,BufRead *.j2 call s:setupTemplate()
+au BufNewFile,BufRead hosts set ft=ansible_hosts
 augroup END
 
 augroup filetypedetect
@@ -428,7 +442,7 @@ augroup filetypedetect
 
 " Whether the .jsx extension is required.
 if !exists('g:jsx_ext_required')
-  let g:jsx_ext_required = 1
+  let g:jsx_ext_required = 0
 endif
 
 " Whether the @jsx pragma is required.
@@ -556,7 +570,6 @@ augroup filetypedetect
 " URL:         https://github.com/LnL7/vim-nix
 
 au BufRead,BufNewFile *.nix set filetype=nix
-au FileType nix setl sw=2 sts=2 et iskeyword+=-
 augroup END
 
 augroup filetypedetect
@@ -957,7 +970,7 @@ augroup END
 augroup filetypedetect
 " toml:cespare/vim-toml
 " Go dep and Rust use several TOML config files that are not named with .toml.
-autocmd BufNewFile,BufRead *.toml,Gopkg.lock,Cargo.lock,*/.cargo/config set filetype=toml
+autocmd BufNewFile,BufRead *.toml,Gopkg.lock,Cargo.lock,*/.cargo/config,Pipfile set filetype=toml
 augroup END
 
 augroup filetypedetect
@@ -1006,7 +1019,7 @@ augroup END
 
 augroup filetypedetect
 " vue:posva/vim-vue
-au BufNewFile,BufRead *.vue setf vue
+au BufNewFile,BufRead *.vue,*.wpy setf vue
 augroup END
 
 augroup filetypedetect
